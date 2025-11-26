@@ -1,6 +1,5 @@
 import os
 import random
-from datetime import datetime
 import yfinance as yf
 import pandas as pd
 import numpy as np
@@ -15,19 +14,14 @@ TOTAL_LIMIT = 100000
 years = 5
 SCOREBOARD_PATH = "esg_simulation_scoreboard.csv"
 
-plt.rcParams['font.family'] = ['Nimbus Roman', 'Serif']
-plt.rcParams['font.size'] = 12
-plt.rcParams['axes.titlesize'] = 12
-plt.rcParams['axes.labelsize'] = 12
-plt.rcParams['xtick.labelsize'] = 12
-plt.rcParams['ytick.labelsize'] = 12
-plt.rcParams['legend.fontsize'] = 12
+plt.rcParams["font.family"] = ["Nimbus Roman", "Serif"]
+plt.rcParams["font.size"] = 12
 plt.close("all")
 
 
 def tprint(text):
     st.markdown(
-        f"<p style='font-family: \"Nimbus Roman\", serif; font-size: 16px; text-align: center;'>{text}</p>",
+        f"<p style='font-family: Nimbus Roman; font-size:16px; text-align:center;'>{text}</p>",
         unsafe_allow_html=True,
     )
 
@@ -37,69 +31,69 @@ def tprint(text):
 # ============================================================
 
 green_emitters = [
-    ["Consumer","BTI","British American Tobacco",68],
-    ["Consumer","CL","Colgate-Palmolive Company",58],
-    ["Consumer","DEO","Diageo",67],
-    ["Consumer","KHC","Kraft Heinz",59],
-    ["Consumer","MDLZ","Mondelez",62],
-    ["Financials","BCS","Barclays",58],
-    ["Financials","MA","Mastercard",59],
-    ["Financials","NDAQ","Nasdaq",66],
-    ["Financials","NWG","NatWest",64],
-    ["Financials","V","Visa",57],
-    ["Healthcare","ABBV","AbbVie",69],
-    ["Healthcare","ABT","Abbott Laboratories",62],
-    ["Healthcare","GSK","GSK",76],
-    ["Healthcare","HLN","Haleon",74],
-    ["Healthcare","TEVA","Teva Pharma",58],
-    ["Industrials","ASML","ASML Holding",57],
-    ["Industrials","LMT","Lockheed Martin Corporation",54],
-    ["Industrials","TT","Trane Technologies",74],
-    ["Industrials","UNP","Union Pacific Corporation",60],
-    ["Industrials","WM","Waste Management",60],
-    ["Technology","ADBE","Adobe",57],
-    ["Technology","CRM","Salesforce",61],
-    ["Technology","CSCO","Cisco",65],
-    ["Technology","INTC","Intel",60],
-    ["Technology","NVDA","NVIDIA",61],
-    ["Utilities","DUK","Duke Energy Corporation",56],
-    ["Utilities","ELE.MC","Endesa",87],
-    ["Utilities","ENGIY","Engie SA",81],
-    ["Utilities","EXC","Exelon Corporation",58],
-    ["Utilities","SRE","Sempra",57],
+    ["Consumer", "BTI", "British American Tobacco", 68],
+    ["Consumer", "CL", "Colgate-Palmolive Company", 58],
+    ["Consumer", "DEO", "Diageo", 67],
+    ["Consumer", "KHC", "Kraft Heinz", 59],
+    ["Consumer", "MDLZ", "Mondelez", 62],
+    ["Financials", "BCS", "Barclays", 58],
+    ["Financials", "MA", "Mastercard", 59],
+    ["Financials", "NDAQ", "Nasdaq", 66],
+    ["Financials", "NWG", "NatWest", 64],
+    ["Financials", "V", "Visa", 57],
+    ["Healthcare", "ABBV", "AbbVie", 69],
+    ["Healthcare", "ABT", "Abbott Laboratories", 62],
+    ["Healthcare", "GSK", "GSK", 76],
+    ["Healthcare", "HLN", "Haleon", 74],
+    ["Healthcare", "TEVA", "Teva Pharma", 58],
+    ["Industrials", "ASML", "ASML Holding", 57],
+    ["Industrials", "LMT", "Lockheed Martin", 54],
+    ["Industrials", "TT", "Trane Technologies", 74],
+    ["Industrials", "UNP", "Union Pacific", 60],
+    ["Industrials", "WM", "Waste Management", 60],
+    ["Technology", "ADBE", "Adobe", 57],
+    ["Technology", "CRM", "Salesforce", 61],
+    ["Technology", "CSCO", "Cisco", 65],
+    ["Technology", "INTC", "Intel", 60],
+    ["Technology", "NVDA", "NVIDIA", 61],
+    ["Utilities", "DUK", "Duke Energy", 56],
+    ["Utilities", "ELE.MC", "Endesa", 87],
+    ["Utilities", "ENGIY", "Engie SA", 81],
+    ["Utilities", "EXC", "Exelon", 58],
+    ["Utilities", "SRE", "Sempra", 57],
 ]
 
 heavy_emitters = [
-    ["Consumer","ABNB","Airbnb",17],
-    ["Consumer","AMZN","Amazon",26],
-    ["Consumer","MAR","Marriott International",35],
-    ["Consumer","SBUX","Starbucks",33],
-    ["Consumer","TSLA","Tesla",30],
-    ["Financials","C","Citigroup",37],
-    ["Financials","GS","Goldman Sachs",39],
-    ["Financials","JPM","JPMorgan Chase",33],
-    ["Financials","MS","Morgan Stanley",41],
-    ["Financials","WFC","Wells Fargo",38],
-    ["Healthcare","ISRG","Intuitive Surgical",37],
-    ["Healthcare","JNJ","Johnson & Johnson",29],
-    ["Healthcare","MCK","McKesson Corporation",36],
-    ["Healthcare","PFE","Pfizer",40],
-    ["Healthcare","VRTX","Vertex Pharmaceuticals",37],
-    ["Industrials","BA","Boeing",40],
-    ["Industrials","CAT","Caterpillar",37],
-    ["Industrials","DE","Deere & Co",47],
-    ["Industrials","PH","Parker-Hannifin",37],
-    ["Industrials","RTX","RTX Corporation",27],
-    ["Technology","AAPL","Apple",34],
-    ["Technology","AVGO","Broadcom",39],
-    ["Technology","INTU","Intuit",45],
-    ["Technology","ORCL","Oracle",38],
-    ["Technology","PLTR","Palantir",30],
-    ["Utilities","CEG","Constellation Energy",37],
-    ["Utilities","D","Dominion Energy",38],
-    ["Utilities","NGG","National Grid",44],
-    ["Utilities","SO","Southern Company",39],
-    ["Utilities","XEL","Xcel Energy",46],
+    ["Consumer", "ABNB", "Airbnb", 17],
+    ["Consumer", "AMZN", "Amazon", 26],
+    ["Consumer", "MAR", "Marriott International", 35],
+    ["Consumer", "SBUX", "Starbucks", 33],
+    ["Consumer", "TSLA", "Tesla", 30],
+    ["Financials", "C", "Citigroup", 37],
+    ["Financials", "GS", "Goldman Sachs", 39],
+    ["Financials", "JPM", "JPMorgan Chase", 33],
+    ["Financials", "MS", "Morgan Stanley", 41],
+    ["Financials", "WFC", "Wells Fargo", 38],
+    ["Healthcare", "ISRG", "Intuitive Surgical", 37],
+    ["Healthcare", "JNJ", "Johnson & Johnson", 29],
+    ["Healthcare", "MCK", "McKesson", 36],
+    ["Healthcare", "PFE", "Pfizer", 40],
+    ["Healthcare", "VRTX", "Vertex Pharma", 37],
+    ["Industrials", "BA", "Boeing", 40],
+    ["Industrials", "CAT", "Caterpillar", 37],
+    ["Industrials", "DE", "Deere & Co", 47],
+    ["Industrials", "PH", "Parker-Hannifin", 37],
+    ["Industrials", "RTX", "RTX Corp", 27],
+    ["Technology", "AAPL", "Apple", 34],
+    ["Technology", "AVGO", "Broadcom", 39],
+    ["Technology", "INTU", "Intuit", 45],
+    ["Technology", "ORCL", "Oracle", 38],
+    ["Technology", "PLTR", "Palantir", 30],
+    ["Utilities", "CEG", "Constellation Energy", 37],
+    ["Utilities", "D", "Dominion Energy", 38],
+    ["Utilities", "NGG", "National Grid", 44],
+    ["Utilities", "SO", "Southern Co", 39],
+    ["Utilities", "XEL", "Xcel Energy", 46],
 ]
 
 rows = []
@@ -108,10 +102,8 @@ for r in green_emitters:
 for r in heavy_emitters:
     rows.append(r + ["heavy"])
 
-df_esg = (
-    pd.DataFrame(rows, columns=["Sector","Ticker","Company","ESG","Group"])
-    .sort_values(["Group","Sector","Ticker"])
-    .reset_index(drop=True)
+df_esg = pd.DataFrame(rows, columns=["Sector", "Ticker", "Company", "ESG", "Group"]).sort_values(
+    ["Group", "Sector", "Ticker"]
 )
 
 
@@ -121,18 +113,12 @@ df_esg = (
 
 def fetch_price_series(ticker):
     try:
-        df = yf.download(
-            ticker,
-            period=f"{years}y",
-            interval="1d",
-            auto_adjust=False,
-            progress=False,
-        )
+        df = yf.download(ticker, period=f"{years}y", interval="1d", auto_adjust=False, progress=False)
         if df.empty:
             return None
         s = df["Adj Close"] if "Adj Close" in df else df["Close"]
         s = s.dropna()
-        if len(s) <= 50:
+        if len(s) < 50:
             return None
         return s
     except:
@@ -153,7 +139,7 @@ def fetch_team_prices(team):
 
     prices = pd.concat(series, axis=1)
     prices.columns = usable
-    prices = prices.sort_index().ffill().bfill()
+    prices = prices.ffill().bfill()
     return prices, usable
 
 
@@ -170,8 +156,8 @@ def portfolio_with_events(df, ticks, sh_start, events, cash0):
     p = df[ticks]
     sh = sh_start.copy()
     cash = cash0
-    event_map = {}
 
+    event_map = {}
     for e in events:
         event_map.setdefault(e["idx"], []).append(e)
 
@@ -201,7 +187,7 @@ def portfolio_with_events(df, ticks, sh_start, events, cash0):
         "Ticker": ticks,
         "Shares": sh,
         "Last Price": last_prices,
-        "Current Value": sh * last_prices,
+        "Current Value": sh * last_prices
     })
 
     return pd.Series(values, index=p.index), holdings, cash
@@ -215,7 +201,7 @@ def update_scoreboard(name, team, final_val, ret, avg_esg):
     if os.path.exists(SCOREBOARD_PATH):
         sb = pd.read_csv(SCOREBOARD_PATH)
     else:
-        sb = pd.DataFrame(columns=["Student","Team","Final portfolio (£)","Total return (%)","Average ESG","Combined Score"])
+        sb = pd.DataFrame(columns=["Student", "Team", "Final portfolio (£)", "Total return (%)", "Average ESG", "Combined Score"])
 
     combined = round(avg_esg * (1 + ret/100), 4)
 
@@ -237,7 +223,7 @@ def update_scoreboard(name, team, final_val, ret, avg_esg):
 def load_scoreboard():
     if os.path.exists(SCOREBOARD_PATH):
         return pd.read_csv(SCOREBOARD_PATH)
-    return pd.DataFrame(columns=["Student","Team","Final portfolio (£)","Total return (%)","Average ESG","Combined Score"])
+    return pd.DataFrame(columns=["Student", "Team", "Final portfolio (£)", "Total return (%)", "Average ESG", "Combined Score"])
 
 
 # ============================================================
@@ -261,6 +247,7 @@ def play_page():
 
     student_name = st.text_input("Enter your name or team name")
 
+    # ---- TEAM SELECTION ----
     team_mode = st.radio("Team assignment", ["Random", "Choose team"])
 
     if "team_choice" not in st.session_state:
@@ -282,6 +269,7 @@ def play_page():
 
     tprint(f"You are in {team_label}")
 
+    # ---- DOWNLOAD PRICES ----
     st.markdown("---")
     st.write("Step 1: Download price data")
 
@@ -291,7 +279,7 @@ def play_page():
             if prices is not None:
                 st.session_state.prices = prices
                 st.session_state.active_tickers = usable
-                tprint("Data ready.")
+                tprint("Data downloaded.")
 
     if "prices" not in st.session_state:
         return
@@ -299,38 +287,51 @@ def play_page():
     prices = st.session_state.prices
     active_tickers = st.session_state.active_tickers
 
+    # Display table with price data
     with st.expander("Show tickers with price data"):
-        df_view = df_esg[df_esg["Ticker"].isin(active_tickers)][["Ticker","Company","Sector","ESG"]].copy()
+        df_view = df_esg[df_esg["Ticker"].isin(active_tickers)][["Ticker", "Company", "Sector", "ESG"]].copy()
+
         last = prices[active_tickers].iloc[-1].rename("Last Price")
         last_df = last.to_frame().reset_index().rename(columns={"index": "Ticker"})
+
         df_full = df_view.merge(last_df, on="Ticker")
         st.dataframe(df_full)
 
+    # ---- INITIAL INVESTMENTS ----
     st.markdown("---")
     st.write("Step 2: Choose initial investments")
 
     invest_tickers = st.multiselect("Select tickers", active_tickers, default=active_tickers)
 
-    custom = st.radio("Initial allocation", ["Equal split", "Custom"])
+    allocation_mode = st.radio("Initial allocation", ["Equal split", "Custom"])
 
     initial_amounts = {}
-    if custom == "Equal split":
+    if allocation_mode == "Equal split":
         eq = TOTAL_LIMIT / len(invest_tickers)
         for t in invest_tickers:
             initial_amounts[t] = eq
         total_invest = TOTAL_LIMIT
+
     else:
-        total_invest = 0
+        total_invest = 0.0
         for t in invest_tickers:
-            amt = st.number_input(f"Amount for {t}", 0.0, TOTAL_LIMIT)
-            initial_amounts[t] = amt
-            total_invest += amt
+            amt = st.number_input(
+                f"Amount for {t}",
+                min_value=0.0,
+                max_value=float(TOTAL_LIMIT),
+                step=100.0,
+                key=f"init_{t}"
+            )
+            initial_amounts[t] = float(amt)
+            total_invest += float(amt)
+
         if total_invest > TOTAL_LIMIT:
             st.error("Total exceeds £100,000")
             return
 
     initial_cash = TOTAL_LIMIT - total_invest
 
+    # Convert initial amounts to shares for all tickers
     initial_prices = prices[active_tickers].iloc[0]
     shares_0 = []
     for t in active_tickers:
@@ -339,19 +340,20 @@ def play_page():
 
     sellable = [t for t in invest_tickers if initial_amounts.get(t, 0) > 0]
 
+    # ---- EVENTS ----
     st.markdown("---")
-    st.write("Step 3: Optional events")
+    st.write("Step 3: Optional buy/sell events")
 
     num_events = st.selectbox("Number of events", [0, 1, 2, 3])
-
     events = []
     dates = prices.index
 
     for i in range(num_events):
         st.subheader(f"Event {i+1}")
-        date_str = st.text_input(f"Date (YYYY-MM-DD) for event {i+1}", key=f"dt{i}")
-        ticker_ev = st.selectbox(f"Ticker for event {i+1}", active_tickers, key=f"tk{i}")
-        cash_ev = st.number_input(f"Cash (+buy, -sell) for event {i+1}", key=f"cs{i}")
+
+        date_str = st.text_input(f"Event {i+1} date (YYYY-MM-DD)", key=f"dt_{i}")
+        ticker_ev = st.selectbox(f"Ticker for event {i+1}", active_tickers, key=f"tk_{i}")
+        cash_ev = st.number_input(f"Cash (+buy, -sell) for {ticker_ev}", step=100.0, key=f"cs_{i}")
 
         if cash_ev != 0:
             try:
@@ -363,30 +365,31 @@ def play_page():
                 return
 
             if cash_ev < 0 and ticker_ev not in sellable:
-                st.error(f"Cannot sell {ticker_ev}; not in initial investments.")
+                st.error(f"You cannot sell {ticker_ev} (not in initial investments).")
                 return
 
             events.append({"idx": idx, "date": dt_final, "cash": cash_ev, "ticker": ticker_ev})
 
+    # ---- RUN SIMULATION ----
     st.markdown("---")
 
     if st.button("Run simulation & submit"):
         if not student_name:
-            st.error("Enter your name")
+            st.error("Enter your name.")
             return
 
         base_port = portfolio_no_events(prices, active_tickers, shares_0, initial_cash)
         port_series, holdings, final_cash = portfolio_with_events(prices, active_tickers, shares_0, events, initial_cash)
 
+        # Plot
         fig, ax = plt.subplots(figsize=(10, 5))
         ax.plot(base_port.index, base_port.values, label="Initial")
         ax.plot(port_series.index, port_series.values, label="With events", linestyle="--")
-        ax.set_title(f"{student_name} — {team_label}")
         ax.grid(True)
         ax.legend()
         st.pyplot(fig)
 
-        hold_df = holdings.merge(df_esg, on="Ticker").sort_values(["Sector","Ticker"])
+        hold_df = holdings.merge(df_esg, on="Ticker").sort_values(["Sector", "Ticker"])
         st.dataframe(hold_df)
 
         final_val = port_series.iloc[-1]
@@ -395,7 +398,7 @@ def play_page():
 
         sb = update_scoreboard(student_name, team_label, final_val, ret, avg_esg)
 
-        st.subheader("Scoreboard")
+        st.subheader("Updated Scoreboard")
         st.dataframe(sb)
 
 
