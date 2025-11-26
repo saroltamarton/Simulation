@@ -7,12 +7,14 @@ import matplotlib.pyplot as plt
 import streamlit as st
 
 
+st.set_page_config(
+    page_title="ESG Investment Portfolio Simulation",
+    page_icon="favicon.png",
+    layout="wide"
+)
 
-st.set_page_config(page_title="ESG Investment Portfolio Simulation",
-                   page_icon="favicon.png",
-                   layout="wide")
-
-st.markdown("""<style>/* Main app and sidebar containers */
+st.markdown(
+    """<style>/* Main app and sidebar containers */
         html, body,
         [data-testid="stAppViewContainer"],
         [data-testid="stSidebar"],
@@ -38,13 +40,12 @@ st.markdown("""<style>/* Main app and sidebar containers */
         .stTable, .stDataFrame {
             font-family: "Times New Roman", serif !important;
         }
-    </style>
-""", unsafe_allow_html=True)
+    </style>""",
+    unsafe_allow_html=True
+)
 
 st.sidebar.image("sidebar_banner.png", use_column_width=True)
 st.sidebar.markdown("---")
-
-
 
 
 TOTAL_LIMIT = 100000
@@ -58,11 +59,10 @@ plt.close("all")
 
 def tprint(text):
     st.markdown(
-        f"<p style='font-family: \"Times New Roman\", serif; font-size:16px; text-align:center;'>{text}</p>",
+        f"<p style='font-family: \"Times New Roman\", serif; "
+        f"font-size:16px; text-align:center;'>{text}</p>",
         unsafe_allow_html=True,
     )
-
-
 
 
 highESG = [
@@ -144,8 +144,6 @@ df_esg = (
 )
 
 
-
-
 def fetch_price_series(ticker):
     try:
         df = yf.download(
@@ -182,8 +180,6 @@ def fetch_team_prices(team):
     prices.columns = usable
     prices = prices.ffill().bfill()
     return prices, usable
-
-
 
 
 def portfolio_no_events(df, ticks, sh, cash):
@@ -246,8 +242,6 @@ def portfolio_with_events(df, ticks, sh_start, events, cash0):
     return pd.Series(values, index=p.index), holdings, cash
 
 
-
-
 def update_scoreboard(name, team, final_val, ret, avg_esg):
     if os.path.exists(SCOREBOARD_PATH):
         sb = pd.read_csv(SCOREBOARD_PATH)
@@ -283,12 +277,10 @@ def update_scoreboard(name, team, final_val, ret, avg_esg):
 def load_scoreboard():
     if os.path.exists(SCOREBOARD_PATH):
         sb = pd.read_csv(SCOREBOARD_PATH)
-
-        # Fix any old labels on the fly
-        sb["Team"] = sb["Team"].replace({
-            "Team Green": "highESG team",
-            "Team Heavy": "lowESG team"
-        })
+        # Clean any old labels
+        sb["Team"] = sb["Team"].replace(
+            {"Team Green": "highESG team", "Team Heavy": "lowESG team"}
+        )
         return sb
 
     return pd.DataFrame(
@@ -301,8 +293,6 @@ def load_scoreboard():
             "Combined Score",
         ]
     )
-
-
 
 
 def main():
@@ -443,47 +433,62 @@ def play_page():
         ticker_ev = st.selectbox(
             f"Ticker for event {i+1}", active_tickers, key=f"tk_{i}"
         )
-        cash_ev = st.number_input(
-            f"Cash (+buy, -sell) for {ticker_ev}",
-            step=100.0,
-            key=f"cs_{i}",
+
+        action = st.selectbox(
+            f"Action for event {i+1}",
+            ["No action", "Buy", "Sell"],
+            key=f"act_{i}"
         )
 
-        if cash_ev != 0:
-            if cash_ev < 0 and ticker_ev not in sellable:
-                st.error(f"You cannot sell {ticker_ev} (not in initial investments).")
-                return
+        amount = st.number_input(
+            f"Amount for {ticker_ev}",
+            step=100.0,
+            min_value=0.0,
+            key=f"amt_{i}"
+        )
 
-            if cash_ev > 0 and sim_cash <= 0:
-                st.error(
-                    "You do not have any cash available for buys at this point. "
-                    "You need to sell first before you can buy."
-                )
-                return
+        if action == "No action" or amount == 0:
+            continue
 
-            if cash_ev > 0 and cash_ev > sim_cash:
-                st.error(
-                    f"You only have £{sim_cash:,.2f} available at this point, "
-                    "so you cannot invest more than that in a single event."
-                )
-                return
+        if action == "Buy":
+            cash_ev = amount       # spend cash
+        else:  # Sell
+            cash_ev = -amount      # receive cash
 
-            try:
-                dt = pd.to_datetime(date_str)
-                idx = (abs(dates - dt)).argmin()
-                dt_final = dates[idx]
-            except Exception:
-                st.error("Invalid date")
-                return
+        if cash_ev < 0 and ticker_ev not in sellable:
+            st.error(f"You cannot sell {ticker_ev} (not in initial investments).")
+            return
 
-            if cash_ev > 0:
-                sim_cash -= cash_ev
-            else:
-                sim_cash += -cash_ev
-
-            events.append(
-                {"idx": idx, "date": dt_final, "cash": cash_ev, "ticker": ticker_ev}
+        if cash_ev > 0 and sim_cash <= 0:
+            st.error(
+                "You do not have any cash available for buys at this point. "
+                "You need to sell first before you can buy."
             )
+            return
+
+        if cash_ev > 0 and cash_ev > sim_cash:
+            st.error(
+                f"You only have £{sim_cash:,.2f} available at this point, "
+                "so you cannot invest more than that in a single event."
+            )
+            return
+
+        try:
+            dt = pd.to_datetime(date_str)
+            idx = (abs(dates - dt)).argmin()
+            dt_final = dates[idx]
+        except Exception:
+            st.error("Invalid date")
+            return
+
+        if cash_ev > 0:
+            sim_cash -= cash_ev
+        else:
+            sim_cash += -cash_ev
+
+        events.append(
+            {"idx": idx, "date": dt_final, "cash": cash_ev, "ticker": ticker_ev}
+        )
 
     st.markdown("---")
 
@@ -505,7 +510,10 @@ def play_page():
         )
 
         tprint(f"Initial portfolio value: £{initial_val:,.2f}")
-        tprint(f"Final portfolio (stocks only) value: £{hold_df['Current Value'].sum():,.2f}")
+        tprint(
+            f"Final portfolio (stocks only) value: "
+            f"£{hold_df['Current Value'].sum():,.2f}"
+        )
         tprint(f"Final cash (uninvested): £{final_cash:,.2f}")
         total_portfolio = hold_df["Current Value"].sum() + final_cash
         tprint(f"Total portfolio (stocks + cash): £{total_portfolio:,.2f}")
@@ -585,9 +593,6 @@ def play_page():
 
 def scoreboard_page():
     st.header("Scoreboard")
-
-    st.write(f"DEBUG: SCOREBOARD_PATH = {SCOREBOARD_PATH}")
-
     sb = load_scoreboard()
     st.dataframe(sb)
 
