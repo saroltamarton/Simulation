@@ -193,6 +193,7 @@ def portfolio_with_events(df, ticks, sh_start, events, cash0):
                     ev["shares_sold"] = sell / price
 
                 ev["remaining_shares"] = sh[j]
+                ev["cash_after"] = cash
 
         port_val = (sh * row).sum() + cash
         if i in event_map:
@@ -286,7 +287,7 @@ def play_page():
 
     student_name = st.text_input("Enter your name or team name")
 
-    # ---- TEAM SELECTION ----
+    # team selection
     team_mode = st.radio("Team assignment", ["Random", "Choose team"])
 
     if "team_choice" not in st.session_state:
@@ -308,7 +309,7 @@ def play_page():
 
     tprint(f"You are in {team_label}")
 
-    # ---- DOWNLOAD PRICES ----
+    # Step 1: download prices
     st.markdown("---")
     st.write("Step 1: Download price data")
 
@@ -326,7 +327,6 @@ def play_page():
     prices = st.session_state.prices
     active_tickers = st.session_state.active_tickers
 
-    # Display table with price data
     with st.expander("Show tickers with price data"):
         df_view = df_esg[df_esg["Ticker"].isin(active_tickers)][
             ["Ticker", "Company", "Sector", "ESG"]
@@ -336,7 +336,7 @@ def play_page():
         df_full = df_view.merge(last_df, on="Ticker")
         st.dataframe(df_full)
 
-    # ---- INITIAL INVESTMENTS ----
+    # Step 2: initial investments
     st.markdown("---")
     st.write("Step 2: Choose initial investments")
 
@@ -353,10 +353,8 @@ def play_page():
         for t in invest_tickers:
             initial_amounts[t] = eq
         total_invest = TOTAL_LIMIT
-
         st.write(f"Total initial investment: £{total_invest:,.2f}")
         st.write(f"Remaining cash: £{TOTAL_LIMIT - total_invest:,.2f}")
-
     else:
         total_invest = 0.0
         for t in invest_tickers:
@@ -369,17 +367,15 @@ def play_page():
             )
             initial_amounts[t] = float(amt)
             total_invest += float(amt)
-
         st.write(f"Total initial investment: £{total_invest:,.2f}")
         st.write(f"Remaining cash: £{TOTAL_LIMIT - total_invest:,.2f}")
-
         if total_invest > TOTAL_LIMIT:
             st.error("Total exceeds £100,000")
             return
 
     initial_cash = TOTAL_LIMIT - total_invest
 
-    # Convert initial amounts to shares for all tickers
+    # convert initial amounts to shares
     initial_prices = prices[active_tickers].iloc[0]
     shares_0 = []
     for t in active_tickers:
@@ -388,7 +384,7 @@ def play_page():
 
     sellable = [t for t in invest_tickers if initial_amounts.get(t, 0) > 0]
 
-    # ---- SHOW INITIAL PORTFOLIO GRAPH (NO EVENTS) ----
+    # show initial portfolio graph
     st.markdown("---")
     st.write("Initial portfolio (no events)")
 
@@ -399,7 +395,7 @@ def play_page():
     ax0.legend()
     st.pyplot(fig0)
 
-    # ---- EVENTS WITH RUNNING CASH ----
+    # Step 3: events
     st.markdown("---")
     st.write("Step 3: Optional buy/sell events")
 
@@ -427,12 +423,10 @@ def play_page():
         )
 
         if cash_ev != 0:
-            # selling constraint
             if cash_ev < 0 and ticker_ev not in sellable:
                 st.error(f"You cannot sell {ticker_ev} (not in initial investments).")
                 return
 
-            # buying constraints based on running cash
             if cash_ev > 0 and sim_cash <= 0:
                 st.error(
                     "You do not have any cash available for buys at this point. "
@@ -447,7 +441,6 @@ def play_page():
                 )
                 return
 
-            # closest trading date
             try:
                 dt = pd.to_datetime(date_str)
                 idx = (abs(dates - dt)).argmin()
@@ -456,7 +449,6 @@ def play_page():
                 st.error("Invalid date")
                 return
 
-            # update simulated cash for later events
             if cash_ev > 0:
                 sim_cash -= cash_ev
             else:
@@ -466,7 +458,6 @@ def play_page():
                 {"idx": idx, "date": dt_final, "cash": cash_ev, "ticker": ticker_ev}
             )
 
-    # ---- RUN SIMULATION ----
     st.markdown("---")
 
     if st.button("Run simulation with events & submit"):
@@ -474,21 +465,26 @@ def play_page():
             st.error("Enter your name.")
             return
 
-        # base_port already calculated above
         port_series, holdings, final_cash = portfolio_with_events(
             prices, active_tickers, shares_0, events, initial_cash
         )
 
-        # initial and final portfolio values
         initial_val = base_port.iloc[0]
         final_val = port_series.iloc[-1]
         ret = (final_val / initial_val - 1) * 100
 
+        hold_df = holdings.merge(df_esg, on="Ticker").sort_values(
+            ["Sector", "Ticker"]
+        )
+
         tprint(f"Initial portfolio value: £{initial_val:,.2f}")
-        tprint(f"Final portfolio value: £{final_val:,.2f}")
+        tprint(f"Final portfolio (stocks only) value: £{hold_df['Current Value'].sum():,.2f}")
+        tprint(f"Final cash (uninvested): £{final_cash:,.2f}")
+        total_portfolio = hold_df["Current Value"].sum() + final_cash
+        tprint(f"Total portfolio (stocks + cash): £{total_portfolio:,.2f}")
         tprint(f"Total portfolio return: {ret:.2f}%")
 
-        # second graph: initial vs with events
+        # second graph
         fig, ax = plt.subplots(figsize=(10, 5))
         ax.plot(base_port.index, base_port.values, label="Initial")
         ax.plot(
@@ -501,10 +497,6 @@ def play_page():
         ax.legend()
         st.pyplot(fig)
 
-        # holdings table
-        hold_df = holdings.merge(df_esg, on="Ticker").sort_values(
-            ["Sector", "Ticker"]
-        )
         st.subheader("Holdings at the end")
         st.dataframe(hold_df)
 
@@ -524,6 +516,7 @@ def play_page():
                         "Shares Bought": shares_0[j],
                         "Shares Sold": 0.0,
                         "Remaining Shares": shares_0[j],
+                        "Cash After": initial_cash,
                         "Portfolio After": initial_val,
                     }
                 )
@@ -537,6 +530,7 @@ def play_page():
                     "Shares Bought": e.get("shares_bought", 0.0),
                     "Shares Sold": e.get("shares_sold", 0.0),
                     "Remaining Shares": e.get("remaining_shares", np.nan),
+                    "Cash After": e.get("cash_after", np.nan),
                     "Portfolio After": e.get("port_value_after", np.nan),
                 }
             )
@@ -546,7 +540,7 @@ def play_page():
             st.subheader("Transaction log")
             st.dataframe(event_log)
 
-        # per-stock returns (for invested tickers)
+        # per-stock returns
         per_stock = []
         for t in invest_tickers:
             p0 = prices[t].iloc[0]
@@ -558,7 +552,6 @@ def play_page():
             st.subheader("Per-stock price returns (for invested tickers)")
             st.dataframe(pd.DataFrame(per_stock))
 
-        # scoreboard update
         avg_esg = df_esg[df_esg["Ticker"].isin(invest_tickers)]["ESG"].mean()
         sb = update_scoreboard(student_name, team_label, final_val, ret, avg_esg)
 
