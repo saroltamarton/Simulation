@@ -6,9 +6,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import streamlit as st
 
-# ============================================================
-# PAGE CONFIG + GLOBAL FONT + SIDEBAR BANNER
-# ============================================================
+
+
 
 st.set_page_config(
     page_title="ESG Investment Portfolio Simulation",
@@ -16,7 +15,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# GLOBAL FONT: Times New Roman everywhere (main + sidebar)
+
 st.markdown("""
     <style>
         /* Main app and sidebar containers */
@@ -52,9 +51,8 @@ st.markdown("""
 st.sidebar.image("sidebar_banner.png", use_column_width=True)
 st.sidebar.markdown("---")
 
-# ============================================================
-# SETTINGS
-# ============================================================
+
+
 
 TOTAL_LIMIT = 100000
 years = 5
@@ -72,9 +70,7 @@ def tprint(text):
     )
 
 
-# ============================================================
-# ESG UNIVERSE
-# ============================================================
+
 
 green_emitters = [
     ["Consumer", "BTI", "British American Tobacco", 68],
@@ -155,9 +151,7 @@ df_esg = (
 )
 
 
-# ============================================================
-# PRICE DOWNLOAD
-# ============================================================
+
 
 def fetch_price_series(ticker):
     try:
@@ -197,9 +191,7 @@ def fetch_team_prices(team):
     return prices, usable
 
 
-# ============================================================
-# PORTFOLIO MODELS
-# ============================================================
+
 
 def portfolio_no_events(df, ticks, sh, cash):
     p = df[ticks]
@@ -261,9 +253,7 @@ def portfolio_with_events(df, ticks, sh_start, events, cash0):
     return pd.Series(values, index=p.index), holdings, cash
 
 
-# ============================================================
-# SCOREBOARD
-# ============================================================
+
 
 def update_scoreboard(name, team, final_val, ret, avg_esg):
     if os.path.exists(SCOREBOARD_PATH):
@@ -312,9 +302,7 @@ def load_scoreboard():
     )
 
 
-# ============================================================
-# STREAMLIT UI
-# ============================================================
+
 
 def main():
     st.title("ESG Investment Portfolio Simulation")
@@ -333,7 +321,6 @@ def play_page():
 
     student_name = st.text_input("Enter your name")
 
-    # team selection
     team_mode = st.radio("Team assignment", ["Random", "Choose team"])
 
     if "team_choice" not in st.session_state:
@@ -355,7 +342,6 @@ def play_page():
 
     tprint(f"You are in {team_label}")
 
-    # Step 1: download prices
     st.markdown("---")
     st.write("Step 1: Download price data")
 
@@ -382,7 +368,6 @@ def play_page():
         df_full = df_view.merge(last_df, on="Ticker")
         st.dataframe(df_full)
 
-    # Step 2: initial investments
     st.markdown("---")
     st.write("Step 2: Choose initial investments")
 
@@ -419,7 +404,6 @@ def play_page():
         st.error("Total exceeds £100,000")
         return
 
-    # convert initial amounts to shares
     initial_prices = prices[active_tickers].iloc[0]
     shares_0 = []
     for t in active_tickers:
@@ -428,7 +412,6 @@ def play_page():
 
     sellable = [t for t in invest_tickers if initial_amounts.get(t, 0) > 0]
 
-    # show initial portfolio graph
     st.markdown("---")
     st.write("Initial portfolio (no events)")
 
@@ -439,7 +422,6 @@ def play_page():
     ax0.legend()
     st.pyplot(fig0)
 
-    # Step 3: events
     st.markdown("---")
     st.write("Step 3: Optional buy/sell events")
 
@@ -528,7 +510,6 @@ def play_page():
         tprint(f"Total portfolio (stocks + cash): £{total_portfolio:,.2f}")
         tprint(f"Total portfolio return: {ret:.2f}%")
 
-        # second graph
         fig, ax = plt.subplots(figsize=(10, 5))
         ax.plot(base_port.index, base_port.values, label="Initial")
         ax.plot(
@@ -544,7 +525,6 @@ def play_page():
         st.subheader("Holdings at the end")
         st.dataframe(hold_df)
 
-        # transaction log
         transactions = []
         initial_date = prices.index[0]
 
@@ -584,7 +564,6 @@ def play_page():
             st.subheader("Transaction log")
             st.dataframe(event_log)
 
-        # per-stock returns
         per_stock = []
         for t in invest_tickers:
             p0 = prices[t].iloc[0]
