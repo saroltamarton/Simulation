@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import streamlit as st
 
-st.write("DEBUG: ESG app version 3")
+st.write("DEBUG: ESG app version 3") 
 
 
 st.set_page_config(page_title="ESG Investment Portfolio Simulation",
