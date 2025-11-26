@@ -183,12 +183,23 @@ def portfolio_with_events(df, ticks, sh_start, events, cash0):
                     buy = min(amt, cash)
                     sh[j] += buy / price
                     cash -= buy
+                    ev["shares_bought"] = buy / price
+                    ev["shares_sold"] = 0.0
                 else:
                     sell = min(-amt, sh[j] * price)
                     sh[j] -= sell / price
                     cash += sell
+                    ev["shares_bought"] = 0.0
+                    ev["shares_sold"] = sell / price
 
-        values.append((sh * row).sum() + cash)
+                ev["remaining_shares"] = sh[j]
+
+        port_val = (sh * row).sum() + cash
+        if i in event_map:
+            for ev in event_map[i]:
+                ev["port_value_after"] = port_val
+
+        values.append(port_val)
 
     last_prices = p.iloc[-1].values
     holdings = pd.DataFrame(
@@ -459,6 +470,15 @@ def play_page():
             prices, active_tickers, shares_0, events, initial_cash
         )
 
+        # Initial and final portfolio values
+        initial_val = base_port.iloc[0]
+        final_val = port_series.iloc[-1]
+        ret = (final_val / initial_val - 1) * 100
+
+        tprint(f"Initial portfolio value: £{initial_val:,.2f}")
+        tprint(f"Final portfolio value: £{final_val:,.2f}")
+        tprint(f"Total portfolio return: {ret:.2f}%")
+
         # Plot
         fig, ax = plt.subplots(figsize=(10, 5))
         ax.plot(base_port.index, base_port.values, label="Initial")
@@ -472,15 +492,65 @@ def play_page():
         ax.legend()
         st.pyplot(fig)
 
+        # Holdings table
         hold_df = holdings.merge(df_esg, on="Ticker").sort_values(
             ["Sector", "Ticker"]
         )
+        st.subheader("Holdings at the end")
         st.dataframe(hold_df)
 
-        final_val = port_series.iloc[-1]
-        ret = (final_val / base_port.iloc[0] - 1) * 100
-        avg_esg = df_esg[df_esg["Ticker"].isin(invest_tickers)]["ESG"].mean()
+        # Transaction log
+        transactions = []
+        initial_date = prices.index[0]
 
+        for t in active_tickers:
+            amt = initial_amounts.get(t, 0.0)
+            if amt > 0:
+                j = active_tickers.index(t)
+                transactions.append(
+                    {
+                        "Date": initial_date,
+                        "Ticker": t,
+                        "Cash": amt,
+                        "Shares Bought": shares_0[j],
+                        "Shares Sold": 0.0,
+                        "Remaining Shares": shares_0[j],
+                        "Portfolio After": initial_val,
+                    }
+                )
+
+        for e in events:
+            transactions.append(
+                {
+                    "Date": e["date"],
+                    "Ticker": e["ticker"],
+                    "Cash": e["cash"],
+                    "Shares Bought": e.get("shares_bought", 0.0),
+                    "Shares Sold": e.get("shares_sold", 0.0),
+                    "Remaining Shares": e.get("remaining_shares", np.nan),
+                    "Portfolio After": e.get("port_value_after", np.nan),
+                }
+            )
+
+        if transactions:
+            event_log = pd.DataFrame(transactions).sort_values(["Date", "Ticker"])
+            st.subheader("Transaction log")
+            st.dataframe(event_log)
+
+        # Per-stock returns (for invested tickers)
+        per_stock = []
+        for t in invest_tickers:
+            p0 = prices[t].iloc[0]
+            p1 = prices[t].iloc[-1]
+            r = (p1 / p0 - 1) * 100
+            per_stock.append({"Ticker": t, "Price return (%)": r})
+
+        if per_stock:
+            st.subheader("Per-stock price returns (for invested tickers)")
+            st.dataframe(pd.DataFrame(per_stock))
+
+        # Scoreboard update
+        avg_esg = df_esg[df_esg["Ticker"].isin(invest_tickers)]["ESG"].mean()
         sb = update_scoreboard(student_name, team_label, final_val, ret, avg_esg)
 
         st.subheader("Updated Scoreboard")
