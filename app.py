@@ -295,8 +295,8 @@ def main():
 
 
 def play_page():
-st.image("Logo.png", width=300)
-st.markdown("---")
+    st.image("Logo.png", width=300)
+    st.markdown("---")
 
     
     student_name = st.text_input("Enter your name")
