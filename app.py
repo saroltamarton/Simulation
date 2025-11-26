@@ -415,7 +415,8 @@ def play_page():
     st.markdown("---")
     st.write("Step 3: Optional buy/sell events")
 
-    st.write(f"Initial free cash available for events: £{initial_cash:,.2f}")
+    sim_cash = initial_cash
+    st.write(f"Initial free cash available for events: £{sim_cash:,.2f}")
 
     num_events = st.selectbox("Number of events", [0, 1, 2, 3])
     events = []
@@ -423,6 +424,7 @@ def play_page():
 
     for i in range(num_events):
         st.subheader(f"Event {i+1}")
+        st.write(f"Cash before this event: £{sim_cash:,.2f}")
 
         date_str = st.text_input(
             f"Event {i+1} date (YYYY-MM-DD)", key=f"dt_{i}"
@@ -454,7 +456,19 @@ def play_page():
 
         if cash_ev < 0 and ticker_ev not in sellable:
             st.error(f"You cannot sell {ticker_ev} (not in initial investments).")
-            return
+            st.stop()
+
+        if cash_ev > 0 and amount > sim_cash:
+            st.error(
+                f"You only have £{sim_cash:,.2f} available. "
+                "Reduce the buy amount or sell first."
+            )
+            st.stop()
+
+        if cash_ev > 0:
+            sim_cash -= amount
+        else:
+            sim_cash += amount
 
         try:
             dt = pd.to_datetime(date_str)
@@ -462,7 +476,7 @@ def play_page():
             dt_final = dates[idx]
         except Exception:
             st.error("Invalid date")
-            return
+            st.stop()
 
         events.append(
             {"idx": idx, "date": dt_final, "cash": cash_ev, "ticker": ticker_ev}
