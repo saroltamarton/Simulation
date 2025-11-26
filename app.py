@@ -7,6 +7,18 @@ import matplotlib.pyplot as plt
 import streamlit as st
 
 # ============================================================
+# PAGE CONFIG + LOGO
+# ============================================================
+
+st.set_page_config(
+    page_title="ESG Simulation",
+    page_icon="favicon.png",
+    layout="wide"
+)
+
+st.sidebar.image("logo.png", width=150)
+
+# ============================================================
 # SETTINGS
 # ============================================================
 
@@ -271,7 +283,6 @@ def load_scoreboard():
 # ============================================================
 
 def main():
-    st.set_page_config(page_title="ESG Simulation", layout="wide")
     st.title("ESG Portfolio Simulation")
 
     page = st.sidebar.radio("Navigation", ["Play Simulation", "Scoreboard"])
@@ -316,10 +327,10 @@ def play_page():
     if st.button("Download data"):
         with st.spinner("Downloading..."):
             prices, usable = fetch_team_prices(team_all)
-            if prices is not None:
-                st.session_state.prices = prices
-                st.session_state.active_tickers = usable
-                tprint("Data downloaded.")
+        if prices is not None:
+            st.session_state.prices = prices
+            st.session_state.active_tickers = usable
+            tprint("Data downloaded.")
 
     if "prices" not in st.session_state:
         return
@@ -352,11 +363,7 @@ def play_page():
         eq = TOTAL_LIMIT / len(invest_tickers)
         for t in invest_tickers:
             initial_amounts[t] = eq
-        total_invest = TOTAL_LIMIT
-        st.write(f"Total initial investment: £{total_invest:,.2f}")
-        st.write(f"Remaining cash: £{TOTAL_LIMIT - total_invest:,.2f}")
     else:
-        total_invest = 0.0
         for t in invest_tickers:
             amt = st.number_input(
                 f"Amount for {t}",
@@ -366,14 +373,16 @@ def play_page():
                 key=f"init_{t}",
             )
             initial_amounts[t] = float(amt)
-            total_invest += float(amt)
-        st.write(f"Total initial investment: £{total_invest:,.2f}")
-        st.write(f"Remaining cash: £{TOTAL_LIMIT - total_invest:,.2f}")
-        if total_invest > TOTAL_LIMIT:
-            st.error("Total exceeds £100,000")
-            return
 
+    total_invest = sum(initial_amounts.values())
     initial_cash = TOTAL_LIMIT - total_invest
+
+    st.write(f"Total initial investment: £{total_invest:,.2f}")
+    st.write(f"Remaining cash: £{initial_cash:,.2f}")
+
+    if total_invest > TOTAL_LIMIT:
+        st.error("Total exceeds £100,000")
+        return
 
     # convert initial amounts to shares
     initial_prices = prices[active_tickers].iloc[0]
