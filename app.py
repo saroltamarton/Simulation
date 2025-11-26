@@ -295,7 +295,7 @@ def main():
 
 
 def play_page():
-    st.image("Logo.png", width=300)
+    st.image("Logo.png", width=100)
     st.markdown("---")
 
     
