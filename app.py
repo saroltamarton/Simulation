@@ -17,6 +17,8 @@ st.set_page_config(
 )
 
 st.sidebar.image("logo.png", width=150)
+st.sidebar.image("sidebar_banner.png", use_column_width=True)
+st.sidebar.markdown("---")
 
 # ============================================================
 # SETTINGS
