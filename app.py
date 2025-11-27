@@ -56,8 +56,7 @@ def tprint(text):
     st.markdown(
         f"<p style='font-family: \"Times New Roman\", serif; "
         f"font-size:16px; text-align:center;'>{text}</p>",
-        unsafe_allow_html=True,
-    )
+        unsafe_allow_html=True,)
 
 
 highESG = [
@@ -90,8 +89,7 @@ highESG = [
     ["Utilities", "ELE.MC", "Endesa", 87],
     ["Utilities", "ENGIY", "Engie SA", 81],
     ["Utilities", "EXC", "Exelon", 58],
-    ["Utilities", "SRE", "Sempra", 57],
-]
+    ["Utilities", "SRE", "Sempra", 57],]
 
 lowESG = [
     ["Consumer", "ABNB", "Airbnb", 17],
@@ -123,8 +121,7 @@ lowESG = [
     ["Utilities", "D", "Dominion Energy", 38],
     ["Utilities", "NGG", "National Grid", 44],
     ["Utilities", "SO", "Southern Co", 39],
-    ["Utilities", "XEL", "Xcel Energy", 46],
-]
+    ["Utilities", "XEL", "Xcel Energy", 46],]
 
 rows = []
 for r in highESG:
@@ -135,8 +132,7 @@ for r in lowESG:
 df_esg = (
     pd.DataFrame(rows, columns=["Sector", "Ticker", "Company", "ESG", "Group"])
     .sort_values(["Group", "Sector", "Ticker"])
-    .reset_index(drop=True)
-)
+    .reset_index(drop=True))
 
 
 def fetch_price_series(ticker):
@@ -146,8 +142,7 @@ def fetch_price_series(ticker):
             period=f"{years}y",
             interval="1d",
             auto_adjust=False,
-            progress=False,
-        )
+            progress=False,)
         if df.empty:
             return None
         s = df["Adj Close"] if "Adj Close" in df else df["Close"]
@@ -225,14 +220,11 @@ def portfolio_with_events(df, ticks, sh_start, events, cash0):
         values.append(port_val)
 
     last_prices = p.iloc[-1].values
-    holdings = pd.DataFrame(
-        {
+    holdings = pd.DataFrame({
             "Ticker": ticks,
             "Shares": sh,
             "Last Price": last_prices,
-            "Current Value": sh * last_prices,
-        }
-    )
+            "Current Value": sh * last_prices,})
 
     return pd.Series(values, index=p.index), holdings, cash
 
@@ -248,9 +240,7 @@ def update_scoreboard(name, team, final_val, ret, avg_esg):
                 "Final portfolio (£)",
                 "Total return (%)",
                 "Average ESG",
-                "Combined Score",
-            ]
-        )
+                "Combined Score",])
 
     combined = round(avg_esg * (1 + ret / 100), 4)
 
@@ -260,8 +250,7 @@ def update_scoreboard(name, team, final_val, ret, avg_esg):
         "Final portfolio (£)": round(final_val, 2),
         "Total return (%)": round(ret, 2),
         "Average ESG": round(avg_esg, 2),
-        "Combined Score": combined,
-    }
+        "Combined Score": combined,}
 
     sb = pd.concat([sb, pd.DataFrame([new_row])], ignore_index=True)
     sb = sb.sort_values("Combined Score", ascending=False).reset_index(drop=True)
@@ -273,8 +262,7 @@ def load_scoreboard():
     if os.path.exists(SCOREBOARD_PATH):
         sb = pd.read_csv(SCOREBOARD_PATH)
         sb["Team"] = sb["Team"].replace(
-            {"Team Green": "highESG team", "Team Heavy": "lowESG team"}
-        )
+            {"Team Green": "highESG team", "Team Heavy": "lowESG team"})
         return sb
 
     return pd.DataFrame(
@@ -284,9 +272,7 @@ def load_scoreboard():
             "Final portfolio (£)",
             "Total return (%)",
             "Average ESG",
-            "Combined Score",
-        ]
-    )
+            "Combined Score",])
 
 
 def main():
@@ -357,8 +343,7 @@ def play_page():
     st.write("Step 2: Choose initial investments")
 
     invest_tickers = st.multiselect(
-        "Select tickers", active_tickers, default=active_tickers
-    )
+        "Select tickers", active_tickers, default=active_tickers)
 
     allocation_mode = st.radio("Initial allocation", ["Equal split", "Custom"])
 
@@ -375,8 +360,7 @@ def play_page():
                 min_value=0.0,
                 max_value=float(TOTAL_LIMIT),
                 step=100.0,
-                key=f"init_{t}",
-            )
+                key=f"init_{t}",)
             initial_amounts[t] = float(amt)
 
     total_invest = sum(initial_amounts.values())
@@ -410,7 +394,6 @@ def play_page():
     st.markdown("---")
     st.write("Step 3: Optional buy/sell events")
 
-    # Track cash and shares consistently with the simulation
     sim_cash = initial_cash
     sim_shares = {t: shares_0[i] for i, t in enumerate(active_tickers)}
 
@@ -425,29 +408,24 @@ def play_page():
         st.write(f"Cash before this event: £{sim_cash:,.2f}")
 
         date_str = st.text_input(
-            f"Event {i+1} date (YYYY-MM-DD)", key=f"dt_{i}"
-        )
+            f"Event {i+1} date (YYYY-MM-DD)", key=f"dt_{i}")
         ticker_ev = st.selectbox(
-            f"Ticker for event {i+1}", active_tickers, key=f"tk_{i}"
-        )
+            f"Ticker for event {i+1}", active_tickers, key=f"tk_{i}")
 
         action = st.selectbox(
             f"Action for event {i+1}",
             ["No action", "Buy", "Sell"],
-            key=f"act_{i}",
-        )
+            key=f"act_{i}",)
 
         amount = st.number_input(
             f"Amount for {ticker_ev}",
             step=100.0,
             min_value=0.0,
-            key=f"amt_{i}",
-        )
+            key=f"amt_{i}",)
 
         if action == "No action" or amount == 0:
             continue
 
-        # Parse and align event date to available price dates
         try:
             dt = pd.to_datetime(date_str)
             idx = (abs(dates - dt)).argmin()
@@ -459,12 +437,11 @@ def play_page():
         price = prices.loc[dt_final, ticker_ev]
 
         if action == "Buy":
-            # Do not allow buying more than available cash
+           
             if amount > sim_cash + 1e-6:
                 st.error(
                     f"You only have £{sim_cash:,.2f} available. "
-                    "Reduce the buy amount or sell first."
-                )
+                    "Reduce the buy amount or sell first.")
                 st.stop()
 
             cash_ev = amount
@@ -472,7 +449,7 @@ def play_page():
             sim_cash -= amount
             sim_shares[ticker_ev] += shares_bought
 
-        else:  # Sell
+        else:  
             if ticker_ev not in sellable:
                 st.error(f"You cannot sell {ticker_ev} (not in initial investments).")
                 st.stop()
@@ -487,8 +464,7 @@ def play_page():
                 st.error(
                     f"You are trying to sell £{amount:,.2f} of {ticker_ev}, "
                     f"but your holding is only worth £{max_sell_value:,.2f}. "
-                    "Reduce the sell amount."
-                )
+                    "Reduce the sell amount.")
                 st.stop()
 
             cash_ev = -amount
@@ -496,14 +472,11 @@ def play_page():
             sim_shares[ticker_ev] -= shares_sold
             sim_cash += amount
 
-        events.append(
-            {
+        events.append({
                 "idx": idx,
                 "date": dt_final,
                 "cash": cash_ev,
-                "ticker": ticker_ev,
-            }
-        )
+                "ticker": ticker_ev,})
 
     st.markdown("---")
 
@@ -513,22 +486,19 @@ def play_page():
             return
 
         port_series, holdings, final_cash = portfolio_with_events(
-            prices, active_tickers, shares_0, events, initial_cash
-        )
+            prices, active_tickers, shares_0, events, initial_cash)
 
         initial_val = base_port.iloc[0]
         final_val = port_series.iloc[-1]
         ret = (final_val / initial_val - 1) * 100
 
         hold_df = holdings.merge(df_esg, on="Ticker").sort_values(
-            ["Sector", "Ticker"]
-        )
+            ["Sector", "Ticker"])
 
         tprint(f"Initial portfolio value: £{initial_val:,.2f}")
         tprint(
             f"Final portfolio (stocks only) value: "
-            f"£{hold_df['Current Value'].sum():,.2f}"
-        )
+            f"£{hold_df['Current Value'].sum():,.2f}")
         tprint(f"Final cash (uninvested): £{final_cash:,.2f}")
         total_portfolio = hold_df["Current Value"].sum() + final_cash
         tprint(f"Total portfolio (stocks + cash): £{total_portfolio:,.2f}")
@@ -540,8 +510,7 @@ def play_page():
             port_series.index,
             port_series.values,
             label="With events",
-            linestyle="--",
-        )
+            linestyle="--",)
         ax.grid(True)
         ax.legend()
         st.pyplot(fig)
@@ -556,8 +525,7 @@ def play_page():
             amt = initial_amounts.get(t, 0.0)
             if amt > 0:
                 j = active_tickers.index(t)
-                transactions.append(
-                    {
+                transactions.append({
                         "Date": initial_date,
                         "Ticker": t,
                         "Cash": amt,
@@ -565,13 +533,10 @@ def play_page():
                         "Shares Sold": 0.0,
                         "Remaining Shares": shares_0[j],
                         "Cash After": initial_cash,
-                        "Portfolio After": initial_val,
-                    }
-                )
+                        "Portfolio After": initial_val,})
 
         for e in events:
-            transactions.append(
-                {
+            transactions.append({
                     "Date": e["date"],
                     "Ticker": e["ticker"],
                     "Cash": e["cash"],
@@ -579,22 +544,18 @@ def play_page():
                     "Shares Sold": e.get("shares_sold", 0.0),
                     "Remaining Shares": e.get("remaining_shares", np.nan),
                     "Cash After": e.get("cash_after", np.nan),
-                    "Portfolio After": e.get("port_value_after", np.nan),
-                }
-            )
+                    "Portfolio After": e.get("port_value_after", np.nan),})
 
         if transactions:
             event_log = pd.DataFrame(transactions).sort_values(["Date", "Ticker"])
             st.subheader("Transaction Log")
             st.dataframe(event_log)
 
-        # All tickers actually involved (initial + events)
         tickers_involved = set(invest_tickers)
         for e in events:
             if e["cash"] != 0:
                 tickers_involved.add(e["ticker"])
 
-        # Per-stock price returns + ESG
         per_stock = []
         for t in sorted(tickers_involved):
             p0 = prices[t].iloc[0]
@@ -604,13 +565,10 @@ def play_page():
             esg_row = df_esg[df_esg["Ticker"] == t]
             esg_val = esg_row["ESG"].iloc[0] if not esg_row.empty else np.nan
 
-            per_stock.append(
-                {
+            per_stock.append({
                     "Ticker": t,
                     "Price return (%)": r,
-                    "ESG score": esg_val,
-                }
-            )
+                    "ESG score": esg_val,})
 
         if per_stock:
             st.subheader("Per-stock Price Returns and ESG Scores")
@@ -637,9 +595,7 @@ def scoreboard_page():
                 "Final portfolio (£)",
                 "Total return (%)",
                 "Average ESG",
-                "Combined Score",
-            ]
-        )
+                "Combined Score",])
         empty.to_csv(SCOREBOARD_PATH, index=False)
         st.success("Scoreboard cleared.")
 
