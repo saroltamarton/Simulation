@@ -397,7 +397,10 @@ def play_page():
     st.markdown("---")
     st.write("Step 3: Optional buy/sell events")
 
+    # Track cash and shares consistently with the simulation
     sim_cash = initial_cash
+    sim_shares = {t: shares_0[i] for i, t in enumerate(active_tickers)}
+
     st.write(f"Initial free cash available for events: £{sim_cash:,.2f}")
 
     num_events = st.selectbox("Number of events", [0, 1, 2, 3])
@@ -427,26 +430,7 @@ def play_page():
         if action == "No action" or amount == 0:
             continue
 
-        if action == "Buy":
-            cash_ev = amount      
-        else:
-            cash_ev = -amount  
-
-        if cash_ev < 0 and ticker_ev not in sellable:
-            st.error(f"You cannot sell {ticker_ev} (not in initial investments).")
-            st.stop()
-
-        if cash_ev > 0 and amount > sim_cash:
-            st.error(
-                f"You only have £{sim_cash:,.2f} available. "
-                "Reduce the buy amount or sell first.")
-            st.stop()
-
-        if cash_ev > 0:
-            sim_cash -= amount
-        else:
-            sim_cash += amount
-
+        # Parse and align event date to available price dates
         try:
             dt = pd.to_datetime(date_str)
             idx = (abs(dates - dt)).argmin()
@@ -455,8 +439,51 @@ def play_page():
             st.error("Invalid date")
             st.stop()
 
+        price = prices.loc[dt_final, ticker_ev]
+
+        if action == "Buy":
+            # Do not allow buying more than available cash
+            if amount > sim_cash + 1e-6:
+                st.error(
+                    f"You only have £{sim_cash:,.2f} available. "
+                    "Reduce the buy amount or sell first.")
+                st.stop()
+
+            cash_ev = amount
+            shares_bought = amount / price
+            sim_cash -= amount
+            sim_shares[ticker_ev] += shares_bought
+
+        else:  # Sell
+            if ticker_ev not in sellable:
+                st.error(f"You cannot sell {ticker_ev} (not in initial investments).")
+                st.stop()
+
+            max_sell_value = sim_shares[ticker_ev] * price
+
+            if max_sell_value <= 0:
+                st.error(f"You have no shares of {ticker_ev} to sell.")
+                st.stop()
+
+            if amount > max_sell_value + 1e-6:
+                st.error(
+                    f"You are trying to sell £{amount:,.2f} of {ticker_ev}, "
+                    f"but your holding is only worth £{max_sell_value:,.2f}. "
+                    "Reduce the sell amount.")
+                st.stop()
+
+            cash_ev = -amount
+            shares_sold = amount / price
+            sim_shares[ticker_ev] -= shares_sold
+            sim_cash += amount
+
         events.append(
-            {"idx": idx, "date": dt_final, "cash": cash_ev, "ticker": ticker_ev})
+            {
+                "idx": idx,
+                "date": dt_final,
+                "cash": cash_ev,
+                "ticker": ticker_ev,
+            })
 
     st.markdown("---")
 
